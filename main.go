@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/entities"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/pb"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/worker"
@@ -25,27 +24,27 @@ func main() {
 		panic(err)
 	}
 
-	client, err := zbc.NewClient(&zbc.ClientConfig{
-		GatewayAddress:      "df4c514a-5a6b-45a8-8bf3-1c147540a2f4.bru-2.zeebe.camunda.io:443",
-		CredentialsProvider: credsProvider,
-	})
+	//client, err := zbc.NewClient(&zbc.ClientConfig{
+	//	GatewayAddress:      "df4c514a-5a6b-45a8-8bf3-1c147540a2f4.bru-2.zeebe.camunda.io:443",
+	//	CredentialsProvider: credsProvider,
+	//})
+	//
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	if err != nil {
-		panic(err)
-	}
+	//ctx := context.Background()
+	//topology, err := client.NewTopologyCommand().Send(ctx)
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	ctx := context.Background()
-	topology, err := client.NewTopologyCommand().Send(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, broker := range topology.Brokers {
-		fmt.Println("Broker", broker.Host, ":", broker.Port)
-		for _, partition := range broker.Partitions {
-			fmt.Println("  Partition", partition.PartitionId, ":", roleToString(partition.Role))
-		}
-	}
+	//for _, broker := range topology.Brokers {
+	//	fmt.Println("Broker", broker.Host, ":", broker.Port)
+	//	for _, partition := range broker.Partitions {
+	//		fmt.Println("  Partition", partition.PartitionId, ":", roleToString(partition.Role))
+	//	}
+	//}
 
 	// Add code to do some work
 	gatewayAddr := "df4c514a-5a6b-45a8-8bf3-1c147540a2f4.bru-2.zeebe.camunda.io:443"
@@ -60,7 +59,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	jobWorker := zbClient.NewJobWorker().JobType("ext_sample_worker").Handler(handleJob).Open()
+	jobWorker := zbClient.NewJobWorker().JobType("trade_match_worker").Handler(handleJob).Open()
 
 	<-readyClose
 	jobWorker.Close()
@@ -102,7 +101,13 @@ func handleJob(client worker.JobClient, job entities.Job) {
 		return
 	}
 
-	log.Println("Complete job", jobKey, "of type", job.Type, "with security id = ", variables["secid"])
+	log.Println("Complete job", jobKey, "of type", job.Type)
+	log.Println("tran_ref", variables["tran_ref"])
+	log.Println("account", variables["account"])
+	log.Println("security", variables["security"])
+	log.Println("qty", variables["qty"])
+	log.Println("tran_type", variables["tran_type"])
+	log.Println("counter_party", variables["counter_party"])
 	//log.Println("Processing order:", variables["orderId"])
 	//log.Println("Collect money using payment method:", headers["method"])
 
