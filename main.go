@@ -115,19 +115,6 @@ func handleJob(client worker.JobClient, job entities.Job) {
 	//	return
 	//}
 
-	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(variables)
-	if err != nil {
-		// failed to set the updated variables
-		failJob(client, job)
-		return
-	}
-
-	ctx := context.Background()
-	_, err = request.Send(ctx)
-	if err != nil {
-		panic(err)
-	}
-
 	// Assume no match
 	match := false
 
@@ -175,6 +162,26 @@ func handleJob(client worker.JobClient, job entities.Job) {
 
 	if err = rows.Close(); err != nil {
 		fmt.Println(err)
+	}
+
+	// Send match_result back to Zeebe
+	if match {
+		variables["match_result"] = "matched"
+	} else {
+		variables["match_result"] = "no_match"
+	}
+
+	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(variables)
+	if err != nil {
+		// failed to set the updated variables
+		failJob(client, job)
+		return
+	}
+
+	ctx := context.Background()
+	_, err = request.Send(ctx)
+	if err != nil {
+		panic(err)
 	}
 
 	// finish up
