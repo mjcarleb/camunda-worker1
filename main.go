@@ -10,6 +10,7 @@ import (
 	"github.com/xuri/excelize/v2"
 	"log"
 	"reflect"
+	"strconv"
 )
 
 //type trade struct {
@@ -132,6 +133,7 @@ func handleJob(client worker.JobClient, job entities.Job) {
 
 	street_trade := map[string]string{}
 
+	row_cnt := 1 // excel rows are indexed starting at 1 in excelize package
 	for rows.Next() {
 
 		row, err := rows.Columns()
@@ -156,8 +158,30 @@ func handleJob(client worker.JobClient, job entities.Job) {
 		}
 
 		if reflect.DeepEqual(firm_trade, street_trade) {
+
 			match = true
+
+			//pos := "G" + "3" // starts at 1 and is actual row in spreadsheet  rows.seekRow
+			pos := "G" + strconv.Itoa(row_cnt)
+
+			err := f.SetCellValue("Sheet1", pos, "matched")
+
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			// save the file
+			f.Save()
+			f.Close()
+
+			// leave iterating over the rows
+			break
+
+			fmt.Println("Never get here!")
+
 		}
+		row_cnt = row_cnt + 1
 	}
 
 	if err = rows.Close(); err != nil {
