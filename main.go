@@ -81,12 +81,12 @@ func roleToString(role pb.Partition_PartitionBrokerRole) string {
 func handleJob(client worker.JobClient, job entities.Job) {
 	jobKey := job.GetKey()
 
-	headers, err := job.GetCustomHeadersAsMap()
-	if err != nil {
-		// failed to handle job as we require the custom job headers
-		failJob(client, job)
-		return
-	}
+	//headers, err := job.GetCustomHeadersAsMap()
+	//if err != nil {
+	//	// failed to handle job as we require the custom job headers
+	//	failJob(client, job)
+	//	return
+	//}
 
 	variables, err := job.GetVariablesAsMap()
 	if err != nil {
@@ -95,7 +95,6 @@ func handleJob(client worker.JobClient, job entities.Job) {
 		return
 	}
 
-	variables["totalPrice"] = 46.50
 	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(variables)
 	if err != nil {
 		// failed to set the updated variables
@@ -103,9 +102,9 @@ func handleJob(client worker.JobClient, job entities.Job) {
 		return
 	}
 
-	log.Println("Complete job", jobKey, "of type", job.Type)
-	log.Println("Processing order:", variables["orderId"])
-	log.Println("Collect money using payment method:", headers["method"])
+	log.Println("Complete job", jobKey, "of type", job.Type, "with security id = ", variables["secid"])
+	//log.Println("Processing order:", variables["orderId"])
+	//log.Println("Collect money using payment method:", headers["method"])
 
 	ctx := context.Background()
 	_, err = request.Send(ctx)
