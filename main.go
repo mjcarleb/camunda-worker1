@@ -2,12 +2,24 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/entities"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/pb"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/worker"
 	"github.com/camunda/zeebe/clients/go/v8/pkg/zbc"
+	"github.com/xuri/excelize/v2"
 	"log"
+	"reflect"
 )
+
+//type trade struct {
+//	tran_ref      string
+//	account       string
+//	security      string
+//	qty           string
+//	tran_type     string
+//	counter_party string
+//}
 
 var readyClose = make(chan struct{})
 
@@ -80,19 +92,28 @@ func roleToString(role pb.Partition_PartitionBrokerRole) string {
 func handleJob(client worker.JobClient, job entities.Job) {
 	jobKey := job.GetKey()
 
-	//headers, err := job.GetCustomHeadersAsMap()
-	//if err != nil {
-	//	// failed to handle job as we require the custom job headers
-	//	failJob(client, job)
-	//	return
-	//}
-
+	// create firm trade from variables passed into process as json
 	variables, err := job.GetVariablesAsMap()
 	if err != nil {
 		// failed to handle job as we require the variables
 		failJob(client, job)
 		return
 	}
+	firm_trade := map[string]string{
+		"tran_ref":      variables["tran_ref"].(string),
+		"account":       variables["account"].(string),
+		"security":      variables["security"].(string),
+		"qty":           variables["qty"].(string),
+		"tran_type":     variables["tran_type"].(string),
+		"counter_party": variables["counter_party"].(string),
+	}
+
+	//headers, err := job.GetCustomHeadersAsMap()
+	//if err != nil {
+	//	// failed to handle job as we require the custom job headers
+	//	failJob(client, job)
+	//	return
+	//}
 
 	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(variables)
 	if err != nil {
@@ -101,6 +122,65 @@ func handleJob(client worker.JobClient, job entities.Job) {
 		return
 	}
 
+	ctx := context.Background()
+	_, err = request.Send(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// Assume no match
+	match := false
+
+	// Read in street master trades from excel
+	f, err := excelize.OpenFile("master_trades.xlsx")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows, err := f.Rows("Sheet1")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	street_trade := map[string]string{}
+
+	for rows.Next() {
+
+		row, err := rows.Columns()
+		if err != nil {
+			fmt.Println(err)
+		}
+		for i, colCell := range row {
+			switch i {
+			case 0:
+				street_trade["tran_ref"] = colCell
+			case 1:
+				street_trade["account"] = colCell
+			case 2:
+				street_trade["security"] = colCell
+			case 3:
+				street_trade["qty"] = colCell
+			case 4:
+				street_trade["tran_type"] = colCell
+			case 5:
+				street_trade["counter_party"] = colCell
+			}
+		}
+
+		if reflect.DeepEqual(firm_trade, street_trade) {
+			match = true
+		}
+	}
+
+	if err = rows.Close(); err != nil {
+		fmt.Println(err)
+	}
+
+	// finish up
+	log.Println("")
+	log.Println("*********")
+	log.Println("Worker completed job with match result = ", match)
 	log.Println("Complete job", jobKey, "of type", job.Type)
 	log.Println("tran_ref", variables["tran_ref"])
 	log.Println("account", variables["account"])
@@ -108,16 +188,11 @@ func handleJob(client worker.JobClient, job entities.Job) {
 	log.Println("qty", variables["qty"])
 	log.Println("tran_type", variables["tran_type"])
 	log.Println("counter_party", variables["counter_party"])
+	log.Println("*********")
+	log.Println("")
 	//log.Println("Processing order:", variables["orderId"])
 	//log.Println("Collect money using payment method:", headers["method"])
 
-	ctx := context.Background()
-	_, err = request.Send(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Println("Successfully completed job")
 	close(readyClose)
 }
 
