@@ -28,9 +28,9 @@ func main() {
 
 	credsProvider, err := zbc.NewOAuthCredentialsProvider(&zbc.OAuthProviderConfig{
 		//AuthorizationServerURL: "https://login.cloud.camunda.io/oauth/token",                       //os.Getenv("ZEEBE_AUTHORIZATION_SERVER_URL"),
-		Audience:     "df4c514a-5a6b-45a8-8bf3-1c147540a2f4.bru-2.zeebe.camunda.io",      //os.Getenv("ZEEBE_ADDRESS"),
-		ClientID:     "F6twwTJrs9Vo77b8CEf~DT6ga1wqY~0I",                                 //os.Getenv("ZEEBE_CLIENT_ID"),
-		ClientSecret: "vsQVRdmL7vPSfjDbouwKDatNe_N~oOVEpHzpQw-SF7Oo3kIo-vucAy-e615rHtKy", //os.Getenv("ZEEBE_CLIENT_SECRET"),
+		Audience:     "241fa57d-bec2-4fec-9968-8f651682b023.bru-2.zeebe.camunda.io",      //os.Getenv("ZEEBE_ADDRESS"),
+		ClientID:     "Dk0MPLoP_F0CmECfoidErdBdcLzZxLr.",                                 //os.Getenv("ZEEBE_CLIENT_ID"),
+		ClientSecret: "_2VaLaDvXpFqtTlUbbinhs_oT_9e.8epWXIAMe5STottheBev9293zxQHG6jGaM~", //os.Getenv("ZEEBE_CLIENT_SECRET"),
 	})
 
 	if err != nil {
@@ -60,7 +60,7 @@ func main() {
 	//}
 
 	// Add code to do some work
-	gatewayAddr := "df4c514a-5a6b-45a8-8bf3-1c147540a2f4.bru-2.zeebe.camunda.io:443"
+	gatewayAddr := "241fa57d-bec2-4fec-9968-8f651682b023.bru-2.zeebe.camunda.io:443"
 	plainText := false
 
 	zbClient, err := zbc.NewClient(&zbc.ClientConfig{
